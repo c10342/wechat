@@ -4,6 +4,10 @@ const app = express()
 
 const auth = require('./wechat/auth')
 
+app.set('views','./views')
+
+app.set('view engine','ejs')
+
 // 验证服务器
 app.use(auth())
 

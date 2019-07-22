@@ -13,6 +13,10 @@ const { getUserDataAsync, parseXMLAsync, formatMessage } = require('../util/tool
 
 const sha1 = require('sha1')
 
+const template = require('./template')
+
+const reply = require('./reply')
+
 module.exports = () => {
     return async (req, res) => {
         try {
@@ -97,8 +101,17 @@ module.exports = () => {
                     MsgId: '22387123354887138' 
                 }
                 */
-                console.log(formatData)
-                res.end('')
+                // console.log(formatData)
+
+                //简单的自动回复，回复文本内容
+                /*
+                一旦遇到以下情况，微信都会在公众号会话中，向用户下发系统提示“该公众号暂时无法提供服务，请稍后再试”：
+                    1、开发者在5秒内未回复任何内容
+                    2、开发者回复了异常数据，比如JSON数据、字符串、xml数据中有多余的空格*****等
+                 */
+
+                let opt = reply(formatData)
+                res.send(template(opt))
             } else {
                 res.end('error')
             }

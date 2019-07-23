@@ -285,18 +285,21 @@ class Wechat {
 }
 
 
-(async ()=>{
-    const wechat = new Wechat()
-    // 先删除自定义菜单，后创建自定义菜单
-    // const delRes = await wechat.deleteMenu()
 
-    // console.log(delRes)
+// (async ()=>{
+//     const wechat = new Wechat()
+//     // 先删除自定义菜单，后创建自定义菜单
+//     const delRes = await wechat.deleteMenu()
 
-    // if(delRes){
-    //     const addRes = await wechat.createMenu(menu)
-    //     console.log(addRes)
-    // }
+//     // console.log(delRes)
 
-    const ticket = await wechat.fetchTicket()
-    console.log(ticket)
-})()
+//     if(delRes){
+//         const addRes = await wechat.createMenu(menu)
+//         console.log(addRes)
+//     }
+
+//     // const ticket = await wechat.fetchTicket()
+//     // console.log(ticket)
+// })()
+
+module.exports = Wechat

@@ -11,7 +11,7 @@ module.exports = {
                 {
                     "type": "view",
                     "name": "搜索",
-                    "url": "http://www.soso.com/"
+                    "url": "http://c10342.mynatapp.cc/search"
                 }, {
                     "name": "发送位置",
                     "type": "location_select",

@@ -33,6 +33,9 @@ module.exports = (message) => {
     }else if(message.MsgType == 'location'){  //视频类型
         content = `维度:${message.Location_X},经度:${message.Location_Y},缩放大小:${message.Scale},位置信息:${message.Label}`
     }else if(message.MsgType == 'event'){
+        if(message.Event == 'CLICK'){
+            content = `用户点击了${message.EventKey}`
+        }
         if(message.Event == 'subscribe'){ // 用户订阅公众号
             content = '欢迎关注公众号'
             if(message.EventKey){ // 没有关注：扫描带参数二维码事件
@@ -45,8 +48,6 @@ module.exports = (message) => {
         content = '用户已经关注了公众号，并且扫描了带参数的二维码'
     }else if(message.MsgType == 'LOCATION'){ //上报地理位置事件
         content = `维度:${message.Latitude},经度:${message.Longitude},精度:${message.Precision}`
-    }else if(message.MsgType == 'CLICK'){  //自定义菜单事件
-        content = `用户点击了${message.EventKey}`
     }
 
     options.content = content

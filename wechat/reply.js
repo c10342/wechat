@@ -1,6 +1,10 @@
 // 封装回复给用户的内容
 
-module.exports = (message) => {
+const Theater = require('../model/Theaters')
+
+const {url} = require('../config')
+
+module.exports = async (message) => {
     let options = {
         toUserName: message.FromUserName,
         fromUserName: message.ToUserName,
@@ -17,6 +21,20 @@ module.exports = (message) => {
             content = '落地成盒'
         } else if (message.Content.match('爱')) {   //半匹配
             content = '我爱你~~~'
+        }else if(message.Content.match('热门')){
+            options.msgType = 'news'  //回复图文消息
+            content = []
+            const data = await Theater.find({},{title:1,summary:1,image:1,_id:0,doubanId: 1})
+            for (let i = 0; i < 7; i++) {
+                const item = data[i];
+                content.push({
+                    title:item.title,
+                    description:item.summary,
+                    picUrl:item.image,
+                    url:`${url}/detail/${item.doubanId}`
+                })
+            }
+            // console.log(content)
         }
     }else if(message.MsgType == 'image'){  //图片类型
         options.msgType = 'image'

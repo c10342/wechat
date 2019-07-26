@@ -23,7 +23,8 @@ module.exports = options => {
         replyMsg += `<ArticleCount>${options.content.length}</ArticleCount><Articles>`
 
         options.content.forEach(item => {
-            replyMsg += `<item><Title><![CDATA[${item.title}]]></Title><Description><![CDATA[${options.description}]]></Description><PicUrl><![CDATA[${options.picUrl}]]></PicUrl><Url><![CDATA[${options.url}]]></Url></item>`
+            // console.log(item)
+            replyMsg += `<item><Title><![CDATA[${item.title}]]></Title><Description><![CDATA[${item.description}]]></Description><PicUrl><![CDATA[${item.picUrl}]]></PicUrl><Url><![CDATA[${item.url}]]></Url></item>`
         })
         replyMsg += `</Articles>`
     }

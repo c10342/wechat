@@ -1,8 +1,12 @@
 const puppeteer = require('puppeteer');
 
+const connect = require('../../db')
+
+const saveTheaters = require('../save/saveTheaters')
+
 const url = 'https://movie.douban.com/cinema/nowplaying/beijing/'
 
-module.exports = async () => {
+const th = async () => {
     // 打开浏览器
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -13,7 +17,7 @@ module.exports = async () => {
         let result = []
         const $list = $('#nowplaying>.mod-bd>.lists>.list-item')
 
-        for (let i = 0; i < $list.length; i++) {
+        for (let i = 0; i < 8; i++) {
             const liDom = $($list[i])
             //电影标题
             let title = $(liDom).data('title');
@@ -45,8 +49,62 @@ module.exports = async () => {
         }
         return result
     });
-
     console.log(dimensions)
+    for (let i = 0; i < dimensions.length; i++) {
+        //获取条目信息
+        let item = dimensions[i];
+        //获取电影详情页面的网址
+        let url = item.href;
+        
+        //跳转到电影详情页
+        await page.goto(url, {
+          waitUntil: 'networkidle2'  //等待网络空闲时，在跳转加载页面
+        });
+      
+        //爬取其他数据
+        let itemResult = await page.evaluate(() => {
+          let genre = [];
+          //类型
+          const $genre = $('[property="v:genre"]');
+      
+          for (let j = 0; j < $genre.length; j++) {
+            genre.push($genre[j].innerText);
+          }
+          
+          //简介
+          const summary = $('[property="v:summary"]').html().replace(/\s+/g, '');
+          
+          //上映日期
+          const releaseDate = $('[property="v:initialReleaseDate"]')[0].innerText;
+          
+          //给单个对象添加两个属性
+          return {
+            genre,
+            summary,
+            releaseDate
+          }
+          
+        })
+      
+        // console.log(itemResult);
+        //在最后给当前对象添加三个属性
+        //在evaluate函数中没办法读取到服务器中的变量
+        item.genre = itemResult.genre;
+        item.summary = itemResult.summary;
+        item.releaseDate = itemResult.releaseDate;
+        
+      }
+
+      // console.log(dimensions)
+      
 
     await browser.close();
+
+    await connect()
+
+    await saveTheaters(dimensions)
 }
+
+th()
+
+// module.exports = th

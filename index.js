@@ -10,6 +10,13 @@ const sha1 = require('sha1')
 
 const { url } = require('./config')
 
+const connect = require('./db/index')
+
+const Theaters = require('./model/Theaters')
+
+// 连接数据可
+connect()
+
 app.set('views', './views')
 
 app.set('view engine', 'ejs')
@@ -49,6 +56,17 @@ app.get('/search', async (req, res) => {
         timestamp,
         signature
     })
+})
+
+app.get('/detail/:id',async function(req,res){
+    try {
+        const {id} = req.params
+        const data = await Theaters.findOne({doubanId:id},{_id: 0, __v: 0, createTime: 0, doubanId: 0})
+        // console.log(data.genre)
+        res.render('detail',{data})
+    } catch (error) {
+        res.end(error.toString())
+    }
 })
 
 // 验证服务器

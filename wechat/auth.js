@@ -110,8 +110,10 @@ module.exports = () => {
                     2、开发者回复了异常数据，比如JSON数据、字符串、xml数据中有多余的空格*****等
                  */
 
-                let opt = reply(formatData)
-                res.send(template(opt))
+                let opt = await reply(formatData)
+                let xmlStr = template(opt)
+                // console.log(xmlStr)
+                res.send(xmlStr)
             } else {
                 res.end('error')
             }

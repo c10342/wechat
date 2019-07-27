@@ -13,6 +13,8 @@ const th = async () => {
     // {waitUntil: 'networkidle2'} 网络空闲再打开
     await page.goto(url, { waitUntil: 'networkidle2' });
 
+    await timeout();
+
     const dimensions = await page.evaluate(() => {
         let result = []
         const $list = $('#nowplaying>.mod-bd>.lists>.list-item')
@@ -105,6 +107,7 @@ const th = async () => {
     await saveTheaters(dimensions)
 }
 
+function timeout() {
+  return new Promise(resolve => setTimeout(resolve, 2000))
+}
 th()
-
-// module.exports = th

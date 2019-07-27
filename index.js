@@ -14,6 +14,8 @@ const connect = require('./db/index')
 
 const Theaters = require('./model/Theaters')
 
+const Trailers = require('./model/Trailers')
+
 // 连接数据可
 connect()
 
@@ -64,6 +66,15 @@ app.get('/detail/:id',async function(req,res){
         const data = await Theaters.findOne({doubanId:id},{_id: 0, __v: 0, createTime: 0, doubanId: 0})
         // console.log(data.genre)
         res.render('detail',{data})
+    } catch (error) {
+        res.end(error.toString())
+    }
+})
+
+app.get('/movie',async function(req,res){
+    try {
+        const data = await Trailers.find({},{_id: 0, __v: 0, cover: 0, link: 0, image: 0})
+        res.render('movie',{data})
     } catch (error) {
         res.end(error.toString())
     }

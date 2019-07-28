@@ -33,10 +33,12 @@
  */
 
 const fs = require('fs')
-const { get,post } = require('../util/http')
+const { get, post } = require('../util/http')
 const { appID, appsecret } = require('../config')
 const menu = require('./menu')
 const path = require('path')
+const request = require('request-promise')
+
 
 class Wechat {
     constructor() { }
@@ -68,7 +70,7 @@ class Wechat {
     saveAccessToken(accessToken) {
         return new Promise((resolve, reject) => {
             accessToken = JSON.stringify(accessToken)
-            fs.writeFile(path.resolve(__dirname,'./access_token.txt'), accessToken, err => {
+            fs.writeFile(path.resolve(__dirname, './access_token.txt'), accessToken, err => {
                 if (!err) {
                     console.log('access_token保存成功')
                     resolve()
@@ -89,7 +91,7 @@ class Wechat {
      */
     readAccessToken() {
         return new Promise((resolve, reject) => {
-            fs.readFile(path.resolve(__dirname,'./access_token.txt'), (err, data) => {
+            fs.readFile(path.resolve(__dirname, './access_token.txt'), (err, data) => {
                 if (err) {
                     console.log('access_token读取失败')
                     console.log(err)
@@ -148,11 +150,11 @@ class Wechat {
      * @returns
      * @memberof Wechat
      */
-    async createMenu(menu){
+    async createMenu(menu) {
         try {
             const token = await this.fetchAccessToken()
             const url = `https://api.weixin.qq.com/cgi-bin/menu/create?access_token=${token}`
-            const result = await post(url,menu)
+            const result = await post(url, menu)
             return result
         } catch (error) {
             console.log(error)
@@ -166,7 +168,7 @@ class Wechat {
      * @returns
      * @memberof Wechat
      */
-    async deleteMenu(){
+    async deleteMenu() {
         try {
             const token = await this.fetchAccessToken()
             const url = `https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=${token}`
@@ -192,8 +194,8 @@ class Wechat {
             const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${token}&type=jsapi`
             const result = await get(url)
             return {
-                ticket:result.ticket,
-                expires_in:Date.now() + (result.expires_in - 300) * 1000
+                ticket: result.ticket,
+                expires_in: Date.now() + (result.expires_in - 300) * 1000
             }
         } catch (error) {
             return error.toString()
@@ -210,7 +212,7 @@ class Wechat {
     saveTicket(ticket) {
         return new Promise((resolve, reject) => {
             ticket = JSON.stringify(ticket)
-            fs.writeFile(path.resolve(__dirname,'./ticket.txt'), ticket, err => {
+            fs.writeFile(path.resolve(__dirname, './ticket.txt'), ticket, err => {
                 if (!err) {
                     console.log('ticket保存成功')
                     resolve()
@@ -231,7 +233,7 @@ class Wechat {
      */
     readTicket() {
         return new Promise((resolve, reject) => {
-            fs.readFile(path.resolve(__dirname,'./ticket.txt'), (err, data) => {
+            fs.readFile(path.resolve(__dirname, './ticket.txt'), (err, data) => {
                 if (err) {
                     console.log('ticket读取失败')
                     console.log(err)
@@ -244,14 +246,14 @@ class Wechat {
         })
     }
 
-   /**
-    *判断jsapi_ticket是否有效
-    *
-    * @param {*} data
-    * @returns
-    * @memberof Wechat
-    */
-   isValidTicket(data) {
+    /**
+     *判断jsapi_ticket是否有效
+     *
+     * @param {*} data
+     * @returns
+     * @memberof Wechat
+     */
+    isValidTicket(data) {
         if (!data && !data.ticket && !data.expires_in) {
             //  过期
             return false
@@ -282,24 +284,118 @@ class Wechat {
             return result.ticket
         }
     }
+
+    /**
+     *上传临时素材
+     *
+     * @param {*} fileName
+     * @param {*} type
+     * @returns
+     * @memberof Wechat
+     */
+    uploadTemporaryMaterial(fileName, type) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const token = await this.fetchAccessToken()
+                const url = `https://api.weixin.qq.com/cgi-bin/media/upload?access_token=${token}&type=${type}`
+                const filePath = path.resolve(__dirname, '../media', fileName)
+                // media必须是一个可读流
+                const form = {
+                    access_token: token,
+                    type,
+                    media: fs.createReadStream(filePath)
+                }
+                //以form表单的方式发送请求
+                const data = await request({ method: 'POST', url, json: true, formData:form })
+                if (data.media_id) {
+                    resolve(data.media_id)
+                } else {
+                    reject(data.errmsg)
+                }
+            } catch (error) {
+                reject(error.toString())
+            }
+        })
+    }
+
+    /**
+     *获取临时素材
+     *
+     * @param {*} type
+     * @param {*} mediaId
+     * @param {*} fileName
+     * @returns
+     * @memberof Wechat
+     */
+    getTemporaryMaterial(type, mediaId, fileName) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const filePath = path.resolve(__dirname, '../downLoad', fileName)
+                const token = await this.fetchAccessToken()
+                let url = `https://api.weixin.qq.com/cgi-bin/media/get?access_token=${token}&media_id=${mediaId}`
+
+                const params = {
+                    access_token: token,
+                    media_id: mediaId
+                }
+                // 视频文件使用http
+                if (type == 'video') {
+                    url.replace('https://', 'http://')
+
+                    const data = await get(url, params)
+                    if (data.video_url) {
+                        resolve(data.video_url)
+                    } else {
+                        reject(data.errmsg)
+                    }
+                } else {
+                    // request(url)
+                    // .pipe(fs.createWriteStream(filePath))
+                    // .once('close', resolve)   //当文件读取完毕时，可读流会自动关闭，一旦关闭触发close事件，从而调用resolve方法通知外部文件读取完毕了
+                    const response = await get(url, params, {}, { responseType: "stream" })
+                    // const response = await axios({
+                    //     url,
+                    //     method: "GET",
+                    //     data:params,
+                    //     responseType: "stream",
+                    // });
+                    const writer = fs.createWriteStream(filePath)
+                    response.pipe(writer)
+
+                    writer.once('finish', resolve).once('error', reject)
+                }
+            } catch (error) {
+                reject(error.toString())
+            }
+        })
+    }
 }
 
 
 
-// (async ()=>{
-//     const wechat = new Wechat()
-//     // 先删除自定义菜单，后创建自定义菜单
-//     const delRes = await wechat.deleteMenu()
+(async () => {
+    const wechat = new Wechat()
+    // 先删除自定义菜单，后创建自定义菜单
+    // const delRes = await wechat.deleteMenu()
 
-//     // console.log(delRes)
+    // console.log(delRes)
 
-//     if(delRes){
-//         const addRes = await wechat.createMenu(menu)
-//         console.log(addRes)
-//     }
+    // if(delRes){
+    //     const addRes = await wechat.createMenu(menu)
+    //     console.log(addRes)
+    // }
 
-//     // const ticket = await wechat.fetchTicket()
-//     // console.log(ticket)
-// })()
+    // const ticket = await wechat.fetchTicket()
+    // console.log(ticket)
+
+    try {
+        const result = await wechat.uploadTemporaryMaterial('2.jpg', 'image')
+        console.log(result)
+
+        await wechat.getTemporaryMaterial('image', result, '5.jpg')
+    } catch (error) {
+        console.log(error)
+    }
+})()
 
 module.exports = Wechat

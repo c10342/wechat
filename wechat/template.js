@@ -1,5 +1,6 @@
 /** 
  * 封装回复用户消息模板
+ * https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140543
 */
 
 module.exports = options => {

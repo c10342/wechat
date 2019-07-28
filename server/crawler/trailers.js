@@ -11,18 +11,21 @@ const trailers = async () => {
   //1. 打开浏览器
   const browser = await puppeteer.launch({
     args: ['--no-sandbox'],
-    // headless: false    //以无头浏览器的形式打开浏览器，没有界面显示，在后台运行的
+    timeout:300000,
+    headless: false    //以无头浏览器的形式打开浏览器，没有界面显示，在后台运行的
   });
   //2. 创建tab标签页
-  const page = await browser.newPage();
+  const page = await browser.newPage({timeout:300000});
   //3. 跳转到指定网址
   await page.goto(url, {
-    waitUntil: 'networkidle2'  //等待网络空闲时，在跳转加载页面
+    waitUntil: 'networkidle2',  //等待网络空闲时，在跳转加载页面
+    timeout:300000
   });
   //4. 等待网址加载完成，开始爬取数据
   //开启延时器，延时2秒钟在开始爬取数据
   await timeout();
   // 一、爬取所有预告片详情页面网址
+  console.log('开始爬取预告片详情页面网址')
   let result = await page.evaluate(() => {
     //对加载好的页面进行dom操作
     //所有爬取的数据数组
@@ -48,21 +51,25 @@ const trailers = async () => {
     //将爬取的数据返回出去
     return result;
   })
+
+  console.log('爬取预告片详情页面网址结束')
   
-  console.log(result);
+  // console.log(result);
   
   //所有电影数据的数组
   let moviesData = [];
   
   //二、爬取主要的电影数据
   //遍历爬取到的数据
+  console.log('开始爬取主要的电影数据')
   for (let i = 0; i < result.length; i++) {
     //获取电影详情页面的网址
     let url = result[i];
     
     //跳转到电影详情页
     await page.goto(url, {
-      waitUntil: 'networkidle2'  //等待网络空闲时，在跳转加载页面
+      waitUntil: 'networkidle2',  //等待网络空闲时，在跳转加载页面
+      timeout:300000
     });
     
     //爬取其他数据
@@ -124,16 +131,19 @@ const trailers = async () => {
       
     })
   
-    console.log(itemResult);
+    // console.log(itemResult);
     //只有数据是对象时，才添加到数组中
     if (itemResult) {
       moviesData.push(itemResult);
     }
   }
+
+  console.log('爬取主要的电影数据结束')
   
-  console.log(moviesData);
+  // console.log(moviesData);
   
   //三、预告片电影链接
+  console.log('开始爬取预告片电影链接')
   for (let i = 0; i < moviesData.length; i++) {
     let item = moviesData[i];
     
@@ -141,7 +151,8 @@ const trailers = async () => {
   
     //跳转到电影详情页
     await page.goto(url, {
-      waitUntil: 'networkidle2'  //等待网络空闲时，在跳转加载页面
+      waitUntil: 'networkidle2',  //等待网络空闲时，在跳转加载页面
+      timeout:300000
     });
   
     //爬取其他数据
@@ -155,8 +166,10 @@ const trailers = async () => {
     })
     
   }
+
+  console.log('爬取预告片电影链接结束')
   
-  console.log(moviesData);
+  // console.log(moviesData);
   
   //5. 关闭浏览器
   await browser.close();

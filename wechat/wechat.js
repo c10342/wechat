@@ -306,7 +306,7 @@ class Wechat {
                     media: fs.createReadStream(filePath)
                 }
                 //以form表单的方式发送请求
-                const data = await request({ method: 'POST', url, json: true, formData:form })
+                const data = await request({ method: 'POST', url, json: true, formData: form })
                 if (data.media_id) {
                     resolve(data.media_id)
                 } else {
@@ -369,6 +369,93 @@ class Wechat {
             }
         })
     }
+
+    /**
+     *上传永久素材
+     *
+     * @param {*} type
+     * @param {*} material
+     * @param {*} body
+     * @returns
+     * @memberof Wechat
+     */
+    uploadPermanentMaterial(type, material, body) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const token = await this.fetchAccessToken()
+                let opts = {
+                    method: 'POST',
+                    json: true
+                }
+                if (type == 'news') {
+                    // 上传图文消息素材
+                    opts.url = `https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=${token}`
+                    opts.body = material
+                } else if (type == 'pic') {
+                    // 上传图文消息中的图片
+                    opts.url = `https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=${token}`
+                    opts.formData = {
+                        access_token: token,
+                        media: fs.createReadStream(path.join(__dirname, '../media', material))
+                    }
+                } else {
+                    // 其他素材
+                    opts.url = `https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${token}&type=${type}`
+                    opts.formData = {
+                        access_token: token,
+                        media: fs.createReadStream(path.join(__dirname, '../media', material)),
+                        type
+                    }
+
+                    // 视频素材需要多提交一个表单
+                    if (type == 'video') {
+                        opts.body = body
+                    }
+                }
+
+                const result = await request(opts)
+                resolve(result)
+            } catch (error) {
+                reject(error.toString())
+            }
+        })
+    }
+
+    /**
+     *获取永久素材
+     *
+     * @param {*} type
+     * @param {*} mediaId
+     * @param {*} fileName
+     * @returns
+     * @memberof Wechat
+     */
+    getPermanentMaterial(type, mediaId, fileName) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const token = await this.fetchAccessToken()
+                const url = `https://api.weixin.qq.com/cgi-bin/material/get_material?access_token=${token}`
+                let opts = {
+                    url,
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        "media_id": mediaId
+                    }
+                }
+                if (type == 'news' || type == 'video') {  
+                    // 图文素材和视频返回结果
+                    const result = await request(opts)
+                    resolve(result)
+                } else {
+                    // 其他的返回文件
+                    request(opts).pipe(fs.createReadStream(path.join(__dirname, '../downLoad', fileName))).once('close', resolve)
+                }
+            } catch (error) {
+                reject(error.toString())
+            }
+        })
+    }
 }
 
 
@@ -389,10 +476,12 @@ class Wechat {
     // console.log(ticket)
 
     try {
-        const result = await wechat.uploadTemporaryMaterial('2.jpg', 'image')
+        const result = await wechat.uploadPermanentMaterial('image','2.jpg')
         console.log(result)
+        // const result = await wechat.uploadTemporaryMaterial('2.jpg', 'image')
+        // console.log(result)
 
-        await wechat.getTemporaryMaterial('image', result, '5.jpg')
+        // await wechat.getTemporaryMaterial('image', result, '5.jpg')
     } catch (error) {
         console.log(error)
     }
